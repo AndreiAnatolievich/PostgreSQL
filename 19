@@ -1,0 +1,14 @@
+WITH
+last_date AS (SELECT MAX(time) AS last_actual_date
+              FROM   user_actions), 
+                    
+users_age AS (SELECT user_id,
+                     DATE_PART('year', AGE((SELECT *
+                                                FROM last_date), birth_date)) AS age
+                FROM users)
+                
+SELECT user_id,
+       COALESCE(age, (SELECT ROUND(AVG(age))
+                      FROM   users_age))::integer AS age
+FROM   users_age
+ORDER BY user_id
