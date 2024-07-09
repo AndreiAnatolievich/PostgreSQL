@@ -1,0 +1,13 @@
+WITH firth_order AS (
+    SELECT DATE(MIN(time)) AS date, user_id
+    FROM user_actions
+    WHERE order_id NOT IN (SELECT  order_id
+                                                  FROM    user_actions
+                                                  WHERE   action = 'cancel_order')
+    GROUP BY user_id
+)
+
+SELECT date, COUNT(user_id) AS first_orders
+FROM firth_order 
+GROUP BY date
+ORDER BY date
