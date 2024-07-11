@@ -1,0 +1,8 @@
+SELECT users.user_id AS user_id_left, user_actions.user_id AS user_id_right, 
+user_actions.order_id, user_actions.time, 
+user_actions.action, users.sex, 
+users.birth_date
+FROM user_actions 
+JOIN users 
+ON users.user_id = user_actions.user_id
+ORDER BY users.user_id
