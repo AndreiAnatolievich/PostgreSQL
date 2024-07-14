@@ -1,0 +1,9 @@
+SELECT user_id, round(avg(array_length(product_ids, 1)), 2) AS avg_order_size
+FROM (SELECT user_id, order_id FROM user_actions 
+WHERE  order_id not in (SELECT DISTINCT order_id
+                        FROM   user_actions
+                        WHERE  action = 'cancel_order')) a
+LEFT JOIN orders b USING (order_id)
+GROUP BY user_id
+ORDER BY user_id
+LIMIT 1000
