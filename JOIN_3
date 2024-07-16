@@ -1,0 +1,7 @@
+SELECT order_id,
+       array_agg(name) as product_names
+FROM   (SELECT order_id,
+               unnest(product_ids) as product_id
+        FROM   orders)t1 join products using(product_id)
+GROUP BY order_id
+ORDER BY order_id limit 1000
