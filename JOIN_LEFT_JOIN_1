@@ -1,0 +1,15 @@
+SELECT name,
+       count(*) as times_purchased
+FROM   (SELECT order_id
+        FROM   courier_actions
+        WHERE  action = 'deliver_order'
+           and date_part('year', time) = 2022
+           and date_part('month', time) = 9) as order_id_september 
+    join (SELECT DISTINCT order_id, unnest(product_ids) as product_id
+        FROM   orders
+     WHERE  order_id not in (SELECT order_id
+         FROM   user_actions
+         WHERE  action = 'cancel_order')) as unnested_orders using (order_id)
+    LEFT JOIN products using (product_id)
+GROUP BY name
+ORDER BY 2 desc limit 10
