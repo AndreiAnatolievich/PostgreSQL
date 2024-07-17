@@ -1,0 +1,24 @@
+WITH name_table AS
+(SELECT DISTINCT order_id, product_id, name 
+FROM 
+(SELECT order_id, UNNEST(product_ids) AS product_id
+FROM orders
+WHERE order_id NOT IN (SELECT order_id FROM user_actions WHERE action = 'cancel_order')
+AND order_id IN (SELECT order_id FROM user_actions WHERE action = 'create_order'))t1
+JOIN products
+USING(product_id)
+ORDER BY order_id, name)
+SELECT pair,
+COUNT(order_id) AS count_pair
+FROM
+(SELECT DISTINCT t2.order_id,
+CASE
+WHEN t2.name > t3.name THEN string_to_array(CONCAT(t3.name, '+', t2.name), '+')
+ELSE string_to_array(CONCAT(t2.name, '+', t3.name), '+')
+END AS pair
+
+FROM name_table t2 join name_table t3
+                ON t2.order_id = t3.order_id and
+                   t2.name != t3.name)t4
+GROUP BY pair
+ORDER BY count_pair DESC, pair
