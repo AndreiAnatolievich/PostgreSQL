@@ -1,0 +1,9 @@
+SELECT courier_id, days_employed, delivered_orders
+FROM
+(SELECT DISTINCT courier_id , 
+DATE_PART('day', MAX(time) OVER() - MIN(time) OVER(PARTITION BY courier_id))::INTEGER AS days_employed,
+COUNT(order_id) FILTER(WHERE action = 'deliver_order') OVER(PARTITION BY courier_id) AS delivered_orders
+FROM courier_actions
+GROUP BY courier_id, time, order_id, action)t
+WHERE days_employed >= 10
+ORDER BY days_employed DESC, courier_id
