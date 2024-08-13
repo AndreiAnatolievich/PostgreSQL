@@ -1,16 +1,20 @@
-SELECT order_id, creation_time, order_price, 
-SUM(order_price) OVER(PARTITION BY creation_time::DATE) AS daily_revenue,
-ROUND(order_price / SUM(order_price) OVER(PARTITION BY creation_time::DATE) * 100, 3) AS percentage_of_daily_revenue
-FROM
-(SELECT order_id, creation_time, SUM(price) AS order_price
-FROM 
-(SELECT *
-FROM
-(SELECT creation_time, order_id, unnest(product_ids) AS product_id
-FROM orders
-WHERE order_id NOT IN (SELECT order_id FROM user_actions WHERE action = 'cancel_order')) a
-LEFT JOIN
-products b
-using(product_id))t1
-GROUP BY order_id, creation_time)t2
-ORDER BY creation_time::DATE DESC, percentage_of_daily_revenue DESC, order_id
+SELECT order_id,
+       creation_time,
+       order_price,
+       sum(order_price) OVER(PARTITION BY date(creation_time)) as daily_revenue,
+       round(100 * order_price::decimal / sum(order_price) OVER(PARTITION BY date(creation_time)),
+             3) as percentage_of_daily_revenue
+FROM   (SELECT order_id,
+               creation_time,
+               sum(price) as order_price
+        FROM   (SELECT order_id,
+                       creation_time,
+                       product_ids,
+                       unnest(product_ids) as product_id
+                FROM   orders
+                WHERE  order_id not in (SELECT order_id
+                                        FROM   user_actions
+                                        WHERE  action = 'cancel_order')) t3
+            LEFT JOIN products using(product_id)
+        GROUP BY order_id, creation_time) t
+ORDER BY date(creation_time) desc, percentage_of_daily_revenue desc, order_id
