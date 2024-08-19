@@ -1,0 +1,18 @@
+SELECT date,
+       daily_revenue,
+       coalesce(revenue_growth_abs, 0) as revenue_growth_abs,
+       coalesce(round(revenue_growth_abs * 100 / LAG(daily_revenue) OVER(), 1),
+                0) as revenue_growth_percentage
+FROM   (SELECT creation_time::date as date,
+               round(sum(price), 1) as daily_revenue,
+               round(sum(price),
+                                                                     1) - lag(round(sum(price), 1)) OVER(ORDER BY creation_time::date) as revenue_growth_abs
+        FROM   (SELECT *
+                FROM   (SELECT creation_time,
+                               unnest(product_ids) as product_id
+                        FROM   orders
+                        WHERE  order_id not in (SELECT order_id
+                                                FROM   user_actions
+                                                WHERE  action = 'cancel_order')) a
+                    LEFT JOIN products b using(product_id))t1
+        GROUP BY date)t2
