@@ -1,0 +1,28 @@
+SELECT date, new_users, new_couriers, total_users, total_couriers,
+      ROUND (100*new_users::DECIMAL/ LAG(new_users,1) OVER (ORDER BY date) - 100,2) AS new_users_change,
+      ROUND (100*new_couriers::DECIMAL/ LAG(new_couriers,1) OVER (ORDER BY date) - 100,2) AS new_couriers_change,
+      ROUND (100*total_users::DECIMAL/ LAG(total_users,1) OVER (ORDER BY date) - 100,2) AS total_users_growth,
+      ROUND (100*total_couriers::DECIMAL/ LAG(total_couriers,1) OVER (ORDER BY date) - 100,2) AS total_couriers_growth
+FROM(
+SELECT date, new_users, new_couriers,
+      SUM (new_users) OVER (ORDER BY date)::int AS total_users,
+      SUM (new_couriers) OVER (ORDER BY date)::int AS total_couriers
+FROM
+(SELECT date, COUNT (user_id) as new_users
+ FROM(
+      SELECT user_id, MIN(time)::DATE as date
+      FROM user_actions
+      GROUP BY user_id) t
+ GROUP BY date
+) AS users
+FULL JOIN
+(SELECT date, COUNT (courier_id) as new_couriers
+ FROM(
+      SELECT courier_id, MIN(time)::DATE as date
+      FROM courier_actions 
+      GROUP BY courier_id) t1
+ GROUP BY date
+) AS couriers
+USING (date)
+) t2
+ORDER BY date
